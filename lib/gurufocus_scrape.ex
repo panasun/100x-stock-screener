@@ -18,17 +18,28 @@ defmodule GuruFocusScrape do
     end
   end
 
-  def fetch_stock(quote) do
-    result =
-      "https://www.gurufocus.com/stock/#{quote}/summary"
-      |> HTTPoison.get!(headers)
-      |> (& &1.body).()
-      |> IO.inspect()
+  def fetch_stock() do
+    get_tickers()
+    |> Enum.drop(5034)
+    |> Enum.map(fn ticker ->
+      IO.inspect("fetch_stock: #{ticker}")
 
-    DB.put({:stock, quote, :summary_html}, result)
+      fetch_stock(ticker)
+    end)
   end
 
-  def get_stock(quote) do
-    result = DB.get({:stock, quote, :summary_html}) |> IO.inspect()
+  def fetch_stock(ticker) do
+    ticker = String.trim(ticker)
+
+    result =
+      "https://www.gurufocus.com/stock/#{ticker}/summary"
+      |> HTTPoison.get!(headers, timeout: 20_000)
+      |> (& &1.body).()
+
+    DB.put({:stock, ticker, :summary_html}, result)
+  end
+
+  def get_stock(ticker) do
+    result = DB.get({:stock, ticker, :summary_html}) |> IO.inspect()
   end
 end

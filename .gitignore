@@ -37,3 +37,4 @@ redis_data
 rabbitmq_data
 
 .env
+db

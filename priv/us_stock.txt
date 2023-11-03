@@ -2207,7 +2207,7 @@ ETSY
 ETV
 ETW
 ETWO
-ETX           
+ETX
 ETY
 EU
 EUDA
