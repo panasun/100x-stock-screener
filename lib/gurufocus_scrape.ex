@@ -8,8 +8,14 @@ defmodule GuruFocusScrape do
     ]
   end
 
-  def fetch_stock() do
-    fetch_stock("KNSL")
+  def get_tickers() do
+    case File.read("priv/us_stock.txt") do
+      {:ok, content} ->
+        tickers = String.split(content, ~r/\r?\n/)
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   def fetch_stock(quote) do
