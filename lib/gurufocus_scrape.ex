@@ -1,5 +1,5 @@
 defmodule GuruFocusScrape do
-  # alias CubDB
+  alias DB
 
   def headers do
     [
@@ -9,17 +9,20 @@ defmodule GuruFocusScrape do
   end
 
   def fetch_stock() do
-    {:ok, db} = CubDB.start_link(data_dir: "db/stock")
-    fetch_stock(db, "KNSL")
+    fetch_stock("KNSL")
   end
 
-  def fetch_stock(db, quote) do
+  def fetch_stock(quote) do
     result =
       "https://www.gurufocus.com/stock/#{quote}/summary"
       |> HTTPoison.get!(headers)
       |> (& &1.body).()
       |> IO.inspect()
 
-    :ok = CubDB.put(db, {:stock, quote}, %{summary_html: result})
+    DB.put({:stock, quote, :summary_html}, result)
+  end
+
+  def get_stock(quote) do
+    result = DB.get({:stock, quote, :summary_html}) |> IO.inspect()
   end
 end

@@ -11,14 +11,13 @@ defmodule ShopeeScrape.MixProject do
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger],
+      mod: {StockScrape.Application, []}
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:httpoison, "~> 2.0"},
@@ -26,7 +25,8 @@ defmodule ShopeeScrape.MixProject do
       {:floki, "~> 0.34.0"},
       {:csv, "~> 3.0"},
       {:elixlsx, "~> 0.5.1"},
-      {:cubdb, "~> 2.0"}
+      {:cubdb, "~> 2.0"},
+      {:poolboy, "~> 1.5.1"}
     ]
   end
 end

@@ -24,3 +24,16 @@ shopee_scrape-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+*~
+\#*\#
+.#*
+#*
+.\#*
+*-emacs-elixir-format.ex*
+erl_crash.bump
+scylla_data
+redis_data
+rabbitmq_data
+
+.env
