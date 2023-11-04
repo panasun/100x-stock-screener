@@ -3,6 +3,10 @@ defmodule GuruFocusScrape do
   alias Elixlsx.{Workbook, Sheet}
   alias DB
 
+  # 1. fetch_stock
+  # 2. parse_summary_data
+  # 3. stock_screen
+
   def headers do
     [
       {"User-Agent",
@@ -11,7 +15,7 @@ defmodule GuruFocusScrape do
   end
 
   def get_tickers() do
-    case File.read("priv/us_stock.txt") do
+    case File.read("priv/set_stock.txt") do
       {:ok, content} ->
         tickers = String.split(content, ~r/\r?\n/)
 
@@ -22,7 +26,7 @@ defmodule GuruFocusScrape do
 
   def fetch_stock() do
     get_tickers()
-    |> Enum.drop(5034)
+    # |> Enum.drop(5034)
     |> Enum.map(fn ticker ->
       IO.inspect("fetch_stock: #{ticker}")
 
@@ -135,8 +139,6 @@ defmodule GuruFocusScrape do
   end
 
   def parse_number(number) do
-    IO.inspect(number)
-
     case number do
       nil ->
         0
@@ -164,8 +166,22 @@ defmodule GuruFocusScrape do
     data
   end
 
+  def ps_valuation(growth_rate, net_margin, ps_ratio) do
+    case ps_ratio do
+      0 ->
+        0
+
+      _ ->
+        ((net_margin / 100 * 1 * (1 + growth_rate / 100) /
+            ps_ratio +
+            growth_rate / 100) * 100)
+        |> Float.ceil(2)
+    end
+  end
+
   def stock_screen(ticker) do
     stock = get_stock(ticker)
+    IO.inspect("stock_screen: #{ticker}")
 
     data =
       %{
@@ -195,29 +211,27 @@ defmodule GuruFocusScrape do
         "debt_to_equity" => stock["debt_to_equity"]
       }
       |> Enum.reduce(%{}, fn {key, value}, acc ->
-        value = parse_number(value)
+        value = parse_number(value) || 0
 
         Map.update(acc, key, value, fn value -> value end)
       end)
 
-    Map.merge(data, %{
-      "rule_of_40" => (data["net_margin"] + data["3_year_revenue_growth_rate"]) |> Float.ceil(2),
+    valuation = %{
+      "rule_of_40" => data["net_margin"] + data["3_year_revenue_growth_rate"],
+      # |> Float.ceil(2),
       "exp_return_ps_3_year_revenue_growth" =>
-        ((data["net_margin"] / 100 * 1 * (1 + data["3_year_revenue_growth_rate"] / 100) /
-            data["ps_ratio"] +
-            data["3_year_revenue_growth_rate"] / 100) * 100)
-        |> Float.ceil(2),
+        ps_valuation(data["3_year_revenue_growth_rate"], data["net_margin"], data["ps_ratio"]),
       "exp_return_ps_3_year_fcf_growth" =>
-        ((data["net_margin"] / 100 * 1 * (1 + data["3_year_fcf_growth_rate"] / 100) /
-            data["ps_ratio"] +
-            data["3_year_fcf_growth_rate"] / 100) * 100)
-        |> Float.ceil(2),
+        ps_valuation(data["3_year_fcf_growth_rate"], data["net_margin"], data["ps_ratio"]),
       "exp_return_ps_future_3_5_year_revenue_growth" =>
-        ((data["net_margin"] / 100 * 1 * (1 + data["future_3_5y_total_revenue_growth_rate"] / 100) /
-            data["ps_ratio"] +
-            data["future_3_5y_total_revenue_growth_rate"] / 100) * 100)
-        |> Float.ceil(2)
-    })
+        ps_valuation(
+          data["future_3_5y_total_revenue_growth_rate"],
+          data["net_margin"],
+          data["ps_ratio"]
+        )
+    }
+
+    Map.merge(data, valuation)
   end
 
   def write_to_csv(data) do
@@ -244,6 +258,6 @@ defmodule GuruFocusScrape do
     workbook = %Workbook{sheets: [sheet]}
 
     Workbook.append_sheet(%Workbook{}, sheet)
-    |> Elixlsx.write_to("data.xlsx")
+    |> Elixlsx.write_to("data_set.xlsx")
   end
 end
