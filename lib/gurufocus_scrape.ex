@@ -131,4 +131,57 @@ defmodule GuruFocusScrape do
 
     data
   end
+
+  def parse_number(number) do
+    s =
+      number
+      |> String.replace(",", "")
+
+    case Float.parse(s) do
+      {n, ""} -> n
+      _ -> number
+    end
+  end
+
+  def stock_screen() do
+    ticker = "AAPL"
+    stock = get_stock(ticker)
+
+    data =
+      %{
+        "ticker" => ticker,
+        "3_year_revenue_growth_rate" => stock["3_year_revenue_growth_rate"],
+        "3_year_fcf_growth_rate" => stock["3_year_fcf_growth_rate"],
+        "future_3_5y_total_revenue_growth_rate" => stock["future_3_5y_total_revenue_growth_rate"],
+        "gross_margin" => stock["gross_margin"],
+        "net_margin" => stock["net_margin"],
+        "fcf_margin" => stock["fcf_margin"],
+        "roe" => stock["roe"],
+        "roa" => stock["roa"],
+        "roic" => stock["roic"],
+        "years_of_profitability_over_past_10_year" =>
+          stock["years_of_profitability_over_past_10_year"],
+        "pe_ratio" => stock["pe_ratio"],
+        "forward_pe_ratio" => stock["forward_pe_ratio"],
+        "peg_ratio" => stock["peg_ratio"],
+        "ps_ratio" => stock["ps_ratio"],
+        "price_to_free_cash_flow" => stock["price_to_free_cash_flow"],
+        "price_to_operating_cash_flow" => stock["price_to_operating_cash_flow"],
+        "ev_to_revenue" => stock["ev_to_revenue"],
+        "ev_to_fcf" => stock["ev_to_fcf"],
+        "ev_to_ebitda" => stock["ev_to_ebitda"],
+        "revenue_ttm_mil" => stock["revenue_ttm_mil"],
+        "cash_to_debt" => stock["cash_to_debt"],
+        "debt_to_equity" => stock["debt_to_equity"]
+      }
+      |> Enum.reduce(%{}, fn {key, value}, acc ->
+        value = parse_number(value)
+
+        Map.update(acc, key, value, fn value -> value end)
+      end)
+
+    Map.merge(data, %{
+      "rule_of_40" => data["net_margin"] + data["3_year_revenue_growth_rate"]
+    })
+  end
 end
