@@ -38,3 +38,4 @@ rabbitmq_data
 
 .env
 db
+.~lock.data.xlsx#

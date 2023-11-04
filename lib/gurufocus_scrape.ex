@@ -1,4 +1,6 @@
 defmodule GuruFocusScrape do
+  require Elixlsx
+  alias Elixlsx.{Workbook, Sheet}
   alias DB
 
   def headers do
@@ -133,23 +135,41 @@ defmodule GuruFocusScrape do
   end
 
   def parse_number(number) do
-    s =
-      number
-      |> String.replace(",", "")
+    IO.inspect(number)
 
-    case Float.parse(s) do
-      {n, ""} -> n
-      _ -> number
+    case number do
+      nil ->
+        0
+
+      _ ->
+        s =
+          number
+          |> String.replace(",", "")
+
+        case Float.parse(s) do
+          {n, ""} -> n
+          _ -> number
+        end
     end
   end
 
   def stock_screen() do
-    ticker = "AAPL"
+    data =
+      get_tickers()
+      |> Enum.map(fn ticker ->
+        stock_screen(ticker)
+      end)
+
+    data |> write_to_csv()
+    data
+  end
+
+  def stock_screen(ticker) do
     stock = get_stock(ticker)
 
     data =
       %{
-        "ticker" => ticker,
+        "0_ticker" => ticker,
         "3_year_revenue_growth_rate" => stock["3_year_revenue_growth_rate"],
         "3_year_fcf_growth_rate" => stock["3_year_fcf_growth_rate"],
         "future_3_5y_total_revenue_growth_rate" => stock["future_3_5y_total_revenue_growth_rate"],
@@ -181,7 +201,7 @@ defmodule GuruFocusScrape do
       end)
 
     Map.merge(data, %{
-      "rule_of_40" => data["net_margin"] + data["3_year_revenue_growth_rate"],
+      "rule_of_40" => (data["net_margin"] + data["3_year_revenue_growth_rate"]) |> Float.ceil(2),
       "exp_return_ps_3_year_revenue_growth" =>
         ((data["net_margin"] / 100 * 1 * (1 + data["3_year_revenue_growth_rate"] / 100) /
             data["ps_ratio"] +
@@ -198,5 +218,32 @@ defmodule GuruFocusScrape do
             data["future_3_5y_total_revenue_growth_rate"] / 100) * 100)
         |> Float.ceil(2)
     })
+  end
+
+  def write_to_csv(data) do
+    headers =
+      data
+      |> Enum.at(0)
+      |> Enum.map(fn {key, value} -> key end)
+
+    sheet =
+      %Sheet{
+        name: "Data",
+        rows: [
+          headers
+          | Enum.map(data, fn r ->
+              Enum.map(headers, fn c ->
+                Map.get(r, c)
+              end)
+            end)
+        ],
+        row_heights: %{4 => 60}
+      }
+      |> IO.inspect()
+
+    workbook = %Workbook{sheets: [sheet]}
+
+    Workbook.append_sheet(%Workbook{}, sheet)
+    |> Elixlsx.write_to("data.xlsx")
   end
 end
