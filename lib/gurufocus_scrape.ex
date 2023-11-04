@@ -181,7 +181,22 @@ defmodule GuruFocusScrape do
       end)
 
     Map.merge(data, %{
-      "rule_of_40" => data["net_margin"] + data["3_year_revenue_growth_rate"]
+      "rule_of_40" => data["net_margin"] + data["3_year_revenue_growth_rate"],
+      "exp_return_ps_3_year_revenue_growth" =>
+        ((data["net_margin"] / 100 * 1 * (1 + data["3_year_revenue_growth_rate"] / 100) /
+            data["ps_ratio"] +
+            data["3_year_revenue_growth_rate"] / 100) * 100)
+        |> Float.ceil(2),
+      "exp_return_ps_3_year_fcf_growth" =>
+        ((data["net_margin"] / 100 * 1 * (1 + data["3_year_fcf_growth_rate"] / 100) /
+            data["ps_ratio"] +
+            data["3_year_fcf_growth_rate"] / 100) * 100)
+        |> Float.ceil(2),
+      "exp_return_ps_future_3_5_year_revenue_growth" =>
+        ((data["net_margin"] / 100 * 1 * (1 + data["future_3_5y_total_revenue_growth_rate"] / 100) /
+            data["ps_ratio"] +
+            data["future_3_5y_total_revenue_growth_rate"] / 100) * 100)
+        |> Float.ceil(2)
     })
   end
 end
