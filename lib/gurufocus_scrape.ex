@@ -61,6 +61,15 @@ defmodule GuruFocusScrape do
     |> String.downcase()
   end
 
+  def parse_summary_data() do
+    get_tickers()
+    |> Enum.map(fn ticker ->
+      IO.inspect("parse_summary_data: #{ticker}")
+
+      parse_summary_data(ticker)
+    end)
+  end
+
   def parse_summary_data(ticker) do
     html = get_stock_summary_html(ticker)
     {:ok, document} = Floki.parse_document(html)
@@ -111,7 +120,7 @@ defmodule GuruFocusScrape do
       end)
 
     data =
-      (data1 ++ data2)
+      ([{"ticker", ticker}] ++ data1 ++ data2)
       |> Enum.reduce(%{}, fn {key, value}, acc ->
         Map.update(acc, key, value, fn current_value ->
           current_value
