@@ -7,6 +7,7 @@
 5.  **Profitability Preference:** Preference will be given to profitable companies. If a company is not profitable, it should still pass the Rule of 40 or have a significant portion of recurring revenue.
 6.  **Management/Direct Stock Ownership:** Management or direct ownership of company stock should be valued at more than $100 million.
 7.  **Sustained Revenue Growth:** The company should demonstrate a pattern of continued revenue growth.
+8.  **Valuation:** Before buying stock, it is essential to verify whether the valuation is overvalued or undervalued. This can be checked using tools suchas Gurufocus and SimplyWall.st
     
 
 Please note that these criteria are used to screen potential investment opportunities for high-growth potential stocks.
