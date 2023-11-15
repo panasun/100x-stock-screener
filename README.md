@@ -8,6 +8,9 @@
 6.  **Management/Direct Stock Ownership:** Management or direct ownership of company stock should be valued at more than $100 million.
 7.  **Sustained Revenue Growth:** The company should demonstrate a pattern of continued revenue growth.
 8.  **Valuation:** Before buying stock, it is essential to verify whether the valuation is overvalued or undervalued. This can be checked using tools suchas Gurufocus and SimplyWall.st
+9.  **Free Cash Flow Margin:** Free cash flow margin should be greater than 20%
+10. **Long-Term Net Profit Margin:** Long-term net profit margin should be greater than 20%
     
 
 Please note that these criteria are used to screen potential investment opportunities for high-growth potential stocks.
+
