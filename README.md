@@ -10,7 +10,11 @@
 8.  **Valuation:** Before buying stock, it is essential to verify whether the valuation is overvalued or undervalued. This can be checked using tools suchas Gurufocus and SimplyWall.st
 9.  **Free Cash Flow Margin:** Free cash flow margin should be greater than 20%
 10. **Long-Term Net Profit Margin:** Long-term net profit margin should be greater than 20%
+11. **Low Debt:** Debt-to-Equity ratio (D/E) should be less than 3.0.
+12. **Strong Cash Position:** Cash-to-Debt ratio should be greater than 0.3.
+
     
 
 Please note that these criteria are used to screen potential investment opportunities for high-growth potential stocks.
+
 
