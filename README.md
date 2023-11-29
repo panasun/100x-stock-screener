@@ -15,5 +15,6 @@
 13. **Marketshare:** Low marketshare < 10% in high TAM (Total Addressable Market)
 14. **High R&D Budget:** High R&D Budget > 15%
 15. **Low Stock Dilution:** New issued stock, ESOP < 2% per year
+16. **No Profit Manipulation:** Beneish M-Score <= 2.2
 
 Please note that these criteria are used to screen potential investment opportunities for high-growth potential stocks.
