@@ -17,5 +17,3 @@
 15. **Low Stock Dilution:** New issued stock, ESOP < 2% per year
 
 Please note that these criteria are used to screen potential investment opportunities for high-growth potential stocks.
-
-
