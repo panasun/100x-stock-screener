@@ -30,7 +30,7 @@ defmodule GuruFocusScrape do
 
   def fetch_stock() do
     get_tickers()
-    |> Enum.drop(792)
+    # |> Enum.drop(792)
     |> Enum.map(fn ticker ->
       IO.inspect("fetch_stock: #{ticker}")
 
