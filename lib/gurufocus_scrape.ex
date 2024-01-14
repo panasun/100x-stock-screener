@@ -8,7 +8,7 @@ defmodule GuruFocusScrape do
   # 3. stock_screen
 
   def file_name do
-    "us_stock"
+    "nse_stock"
   end
 
   def headers do
@@ -30,7 +30,7 @@ defmodule GuruFocusScrape do
 
   def fetch_stock() do
     get_tickers()
-    # |> Enum.drop(5034)
+    |> Enum.drop(792)
     |> Enum.map(fn ticker ->
       IO.inspect("fetch_stock: #{ticker}")
 
