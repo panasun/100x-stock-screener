@@ -212,7 +212,8 @@ defmodule GuruFocusScrape do
         "ev_to_ebitda" => stock["ev_to_ebitda"],
         "revenue_ttm_mil" => stock["revenue_ttm_mil"],
         "cash_to_debt" => stock["cash_to_debt"],
-        "debt_to_equity" => stock["debt_to_equity"]
+        "debt_to_equity" => stock["debt_to_equity"],
+        "beneish_m_score" => stock["beneish_m_score"]
       }
       |> Enum.reduce(%{}, fn {key, value}, acc ->
         value = parse_number(value) || 0
