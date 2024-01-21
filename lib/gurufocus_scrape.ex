@@ -8,7 +8,7 @@ defmodule GuruFocusScrape do
   # 3. stock_screen
 
   def file_name do
-    "nse_stock"
+    "bom_stock"
   end
 
   def headers do
