@@ -16,5 +16,6 @@
 14. **High R&D Budget:** High R&D Budget > 15%
 15. **Low Stock Dilution:** New issued stock, ESOP < 2% per year
 16. **No Profit Manipulation:** Beneish M-Score <= -2.2
+17. **Short Sell Ratio:** Lower is better < 5%
 
 Please note that these criteria are used to screen potential investment opportunities for high-growth potential stocks.
