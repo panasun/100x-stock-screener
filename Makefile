@@ -1,7 +1,7 @@
 install:
 	mix deps.get
 
-iex:
+dev:
 	iex -S mix
 
 fetch-stock:

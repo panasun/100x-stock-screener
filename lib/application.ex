@@ -9,6 +9,12 @@ defmodule StockScrape.Application do
         worker_module: DB,
         size: 1,
         max_overflow: 0
+      ),
+      :poolboy.child_spec(GuruFocusScrape,
+        name: {:local, GuruFocusScrape.Supervisor},
+        worker_module: GuruFocusScrape,
+        size: 20,
+        max_overflow: 3
       )
     ]
 

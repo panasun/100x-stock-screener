@@ -1,14 +1,58 @@
 defmodule GuruFocusScrape do
+  use GenServer
   require Elixlsx
   alias Elixlsx.{Workbook, Sheet}
   alias DB
+
+  def start_link(_) do
+    GenServer.start_link(__MODULE__, nil)
+  end
+
+  def start_link(_) do
+    GenServer.start_link(__MODULE__, nil)
+  end
+
+  def pool(request) do
+    :poolboy.transaction(GuruFocusScrape.Supervisor, fn pid ->
+      case request do
+        {:call, message} -> GenServer.call(pid, message)
+        {:cast, message} -> GenServer.cast(pid, message)
+        _ -> raise ArgumentError, :invalid_request_format
+      end
+    end)
+  end
+
+  def call(key, value) do
+    pool({:call, {key, value}})
+  end
+
+  def cast(key, value) do
+    pool({:cast, {key, value}})
+  end
+
+  @impl true
+  def init(_) do
+    Process.flag(:trap_exit, true)
+    {:ok, %{}}
+  end
+
+  @impl true
+  def handle_call({:fetch_stock, ticker}, _, state) do
+    {:reply, fetch_stock(ticker), state}
+  end
+
+  @impl true
+  def handle_cast({:fetch_stock, ticker}, state) do
+    fetch_stock(ticker)
+    {:noreply, state}
+  end
 
   # 1. fetch_stock
   # 2. parse_summary_data
   # 3. stock_screen
 
   def file_name do
-    "tsx_stock"
+    "us_stock"
   end
 
   def headers do
@@ -30,11 +74,9 @@ defmodule GuruFocusScrape do
 
   def fetch_stock() do
     get_tickers()
-    # |> Enum.drop(323)
-    |> Enum.map(fn ticker ->
-      IO.inspect("fetch_stock: #{ticker}")
-
+    |> Enum.with_index(fn ticker, index ->
       fetch_stock(ticker)
+      IO.inspect("fetch_stock: #{index} #{ticker}")
     end)
   end
 
@@ -129,8 +171,27 @@ defmodule GuruFocusScrape do
         key != nil and key != ""
       end)
 
+    data3 =
+      document
+      |> Floki.find("a.color-primary")
+      |> Floki.find("span.t-primary")
+      |> Floki.text()
+      |> String.replace("$", "")
+
+    data3 = [{"gf_value", data3}]
+
+    data4 =
+      document
+      |> Floki.find("div.m-t-xs span.t-body-lg")
+      |> Floki.text()
+      |> String.trim()
+      |> String.replace("$", "")
+      |> String.trim()
+
+    data4 = [{"price", data4}]
+
     data =
-      ([{"ticker", ticker}] ++ data1 ++ data2)
+      ([{"ticker", ticker}] ++ data1 ++ data2 ++ data3 ++ data4)
       |> Enum.reduce(%{}, fn {key, value}, acc ->
         Map.update(acc, key, value, fn current_value ->
           current_value
@@ -213,7 +274,9 @@ defmodule GuruFocusScrape do
         "revenue_ttm_mil" => stock["revenue_ttm_mil"],
         "cash_to_debt" => stock["cash_to_debt"],
         "debt_to_equity" => stock["debt_to_equity"],
-        "beneish_m_score" => stock["beneish_m_score"]
+        "beneish_m_score" => stock["beneish_m_score"],
+        "price" => stock["price"],
+        "gf_value" => stock["gf_value"]
       }
       |> Enum.reduce(%{}, fn {key, value}, acc ->
         value = parse_number(value) || 0
@@ -244,6 +307,11 @@ defmodule GuruFocusScrape do
           data["future_3_5y_total_revenue_growth_rate"],
           data["fcf_margin"],
           data["ps_ratio"]
+        ),
+      "gf_ratio" =>
+        if(data["gf_value"] > 0 && data["price"] > 0,
+          do: data["price"] / data["gf_value"],
+          else: nil
         )
     }
 
