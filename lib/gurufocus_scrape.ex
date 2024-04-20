@@ -74,21 +74,37 @@ defmodule GuruFocusScrape do
 
   def fetch_stock() do
     get_tickers()
-    |> Enum.with_index(fn ticker, index ->
-      fetch_stock(ticker)
-      IO.inspect("fetch_stock: #{index} #{ticker}")
+    |> Enum.chunk_every(30)
+    |> Enum.with_index(fn tickers, index ->
+      IO.inspect(tickers)
+      fetch_stocks_in_chunk(tickers, index)
     end)
   end
 
+  def fetch_stocks_in_chunk(tickers, chunk_index) do
+    tickers
+    |> Enum.with_index()
+    |> Enum.map(fn {ticker, index} ->
+      Task.async(fn -> fetch_stock(ticker) end)
+    end)
+    |> Task.await_many(60_000)
+  end
+
   def fetch_stock(ticker) do
-    ticker = String.trim(ticker)
+    try do
+      ticker = String.trim(ticker)
 
-    result =
-      "https://www.gurufocus.com/stock/#{ticker}/summary"
-      |> HTTPoison.get!(headers, timeout: 20_000)
-      |> (& &1.body).()
+      result =
+        "https://www.gurufocus.com/stock/#{ticker}/summary"
+        |> HTTPoison.get!(headers, timeout: 120_000)
+        |> (& &1.body).()
 
-    DB.put({:stock, ticker, :summary_html}, result)
+      IO.inspect("fetch_stock: #{ticker}")
+
+      DB.put({:stock, ticker, :summary_html}, result)
+    rescue
+      e -> e
+    end
   end
 
   def get_stock_summary_html(ticker) do
@@ -115,11 +131,20 @@ defmodule GuruFocusScrape do
 
   def parse_summary_data() do
     get_tickers()
+    |> Enum.chunk_every(100)
+    |> Enum.map(fn tickers ->
+      IO.inspect(tickers)
+      parse_summary_data_in_chunk(tickers)
+    end)
+  end
+
+  def parse_summary_data_in_chunk(tickers) do
+    tickers
     |> Enum.map(fn ticker ->
       IO.inspect("parse_summary_data: #{ticker}")
-
-      parse_summary_data(ticker)
+      Task.async(fn -> parse_summary_data(ticker) end)
     end)
+    |> Task.await_many(60_000)
   end
 
   def parse_summary_data(ticker) do
@@ -206,6 +231,9 @@ defmodule GuruFocusScrape do
   def parse_number(number) do
     case number do
       nil ->
+        0
+
+      "" ->
         0
 
       _ ->
