@@ -17,7 +17,7 @@
 15. **Low Stock Dilution:** New issued stock, ESOP < 2% per year
 16. **No Profit Manipulation:** Beneish M-Score <= -2.2
 17. **Short Sell Ratio:** Lower is better < 5%
-18. **Portfolio Optimization:** Use Entropic Value at Risk (EVaR) or Entropic Drawdown at Risk (EDaR) to weight the stocks in the portfolio. Use Gerber statistic as covariance estimator and James-Stein as expected value estimator. After testing, use EVaR with a 1-year lookback period and a 10% target maximum drawdown.
+18. **Portfolio Optimization:** Use Entropic Value at Risk (EVaR) or Entropic Drawdown at Risk (EDaR) to weight the stocks in the portfolio. Use Gerber statistic as covariance estimator and James-Stein as expected value estimator. After testing, use EVaR with a 9 - 12 month lookback period and a 10% target maximum drawdown.
 19: ** Supertrend Indicator:** Use the Supertrend indicator for weekly and monthly to determine an uptrend and select the stock.
 
 Please note that these criteria are used to screen potential investment opportunities for high-growth potential stocks.
