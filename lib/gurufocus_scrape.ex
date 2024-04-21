@@ -302,6 +302,7 @@ defmodule GuruFocusScrape do
         "revenue_ttm_mil" => stock["revenue_ttm_mil"],
         "cash_to_debt" => stock["cash_to_debt"],
         "debt_to_equity" => stock["debt_to_equity"],
+        "altman_z_score" => stock["altman_z_score"],
         "beneish_m_score" => stock["beneish_m_score"],
         "price" => stock["price"],
         "gf_value" => stock["gf_value"]
@@ -351,6 +352,7 @@ defmodule GuruFocusScrape do
       data
       |> Enum.at(0)
       |> Enum.map(fn {key, value} -> key end)
+      |> Enum.sort()
 
     sheet =
       %Sheet{
