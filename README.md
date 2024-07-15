@@ -21,6 +21,6 @@
 18. **Portfolio Optimization:** Use Entropic Value at Risk (EVaR) or Entropic Drawdown at Risk (EDaR) to weight the stocks in the portfolio. Use Gerber statistic as covariance estimator and James-Stein as expected value estimator. After testing, use EVaR with a 9 - 12 month lookback period and a 10% target maximum drawdown. Preferred negative kurtosis and positive skewness.
 19. **Supertrend Indicator:** Use the Supertrend indicator for weekly and monthly to determine an uptrend and select the stock.
 20. **Employee Review:** Read employee reviews from Glassdoor or Indeed to get more insight into the company.
-21. **Line Break Chart:** Use line break chart to filter uptrend.
+21. **Price Chart:** Use line break chart, renko and kagi to confirm uptrend.
 
 Please note that these criteria are used to screen potential investment opportunities for high-growth potential stocks.
