@@ -40,3 +40,4 @@ rabbitmq_data
 db
 .~lock.data.xlsx#
 yfinance.cache
+.DS_Store
