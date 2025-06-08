@@ -19,12 +19,15 @@ class GuruFocusScrape:
         }
         self.file_name = "us_stock"
         self.cache = {}  # Simple in-memory cache to replace DB functionality
-        
+        self.initialize_driver()
+
+    def initialize_driver(self):
         # Initialize Chrome options
         chrome_options = Options()
         chrome_options.add_argument('--headless')  # Run in headless mode
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--incognito')  # Add incognito mode
         chrome_options.add_argument(f'user-agent={self.headers["User-Agent"]}')
         
         # Initialize Chrome driver
@@ -34,9 +37,10 @@ class GuruFocusScrape:
         )
         self.wait = WebDriverWait(self.driver, 20)  # 20 seconds timeout
 
-    def __del__(self):
+    def reset_driver(self):
         if hasattr(self, 'driver'):
             self.driver.quit()
+        self.initialize_driver()
 
     def get_tickers(self) -> List[str]:
         try:
@@ -69,23 +73,30 @@ class GuruFocusScrape:
 
     def fetch_stocks(self):
         tickers = self.get_tickers()
-        chunk_size = 30
+        batch_size = 5  # Process 5 stocks at a time
         results = []  # Collect all results
         
-        for i in range(0, len(tickers), chunk_size):
-            chunk = tickers[i:i + chunk_size]
-            print(f"Processing chunk: {chunk}")
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:  # Single worker for Selenium
-                executor.map(self.fetch_stock, chunk)
+        for i in range(0, len(tickers), batch_size):
+            batch = tickers[i:i + batch_size]
+            print(f"Processing batch: {batch}")
             
-            # Process each stock in the chunk immediately after fetching
-            for ticker in chunk:
+            # Process each stock in the batch
+            for ticker in batch:
                 print(f"Processing data for {ticker}")
-                summary_data = self.parse_summary_data(ticker)
-                if summary_data:
-                    result = self.stock_screen(ticker)
-                    if result:
-                        results.append(result)
+                html = self.fetch_stock(ticker)
+                if html:
+                    summary_data = self.parse_summary_data(ticker)
+                    if summary_data:
+                        result = self.stock_screen(ticker)
+                        if result:
+                            results.append(result)
+            
+            # Reset driver after each batch
+            print("Resetting browser for next batch...")
+            self.reset_driver()
+            
+            # Optional: Add a small delay between batches
+            time.sleep(2)
         
         # Write results to Excel after processing all stocks
         if results:
