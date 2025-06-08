@@ -161,7 +161,7 @@ def main():
     total_tickers = len(tickers)
     print(f"Total tickers to process: {total_tickers}")
     
-    max_workers = 10
+    max_workers = 5
     
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(process_ticker, ticker): ticker for ticker in tickers}
