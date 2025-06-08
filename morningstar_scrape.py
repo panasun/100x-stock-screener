@@ -11,6 +11,16 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
+from queue import Queue
+import os
+
+# Global variables for thread safety
+excel_lock = threading.Lock()
+batch_size = 100  # Number of records to save in each batch
+columns = ['Exchange', 'Ticker', '1-Day', '1-Week', '1-Month', '3-Month', 'YTD', 
+           '1-Year', '3-Year', '5-Year', '10-Year', '15-Year']
 
 def read_stock_tickers(file_path):
     tickers = []
@@ -42,24 +52,21 @@ def setup_driver():
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     return driver
 
-def get_stock_returns(driver, exchange, ticker, columns):
+def get_stock_returns(driver, exchange, ticker):
     url = f"https://www.morningstar.com/stocks/{exchange}/{ticker}/trailing-returns"
     print(f"Fetching data for {exchange}:{ticker}")
-    print(url)
     
     try:
         driver.get(url)
         time.sleep(5)  # Wait for initial page load
         
-        # Try to find any table on the page
         try:
-            wait = WebDriverWait(driver, 10)  # Reduced timeout to 10 seconds
+            wait = WebDriverWait(driver, 10)
             wait.until(lambda d: len(d.find_elements(By.TAG_NAME, "table")) > 0)
         except TimeoutException:
             print(f"Timeout waiting for table for {exchange}:{ticker}")
             return None
             
-        # Get the page source after JavaScript has loaded
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         tables = soup.find_all('table')
         
@@ -67,21 +74,18 @@ def get_stock_returns(driver, exchange, ticker, columns):
             print(f"No tables found for {exchange}:{ticker}")
             return None
             
-        table = tables[0]  # Get the first table
+        table = tables[0]
+        returns = {'ticker': ticker, 'exchange': exchange}
+        rows = table.find_all('tr')[1:]
         
-        returns = {}
-        rows = table.find_all('tr')[1:]  # Skip header row
-        
-        # Get the second row (Industry)
         if len(rows) >= 2:
             row = rows[0]
             cols = row.find_all('td')
             if len(cols) >= 2:
-                # Get all values except the first column (which is "Industry")
                 for i, col in enumerate(cols[1:], 1):
                     value = col.text.strip().replace('%', '')
                     try:
-                        returns[columns[i+1]] = float(value)  # i+1 because we skip Exchange and Ticker
+                        returns[columns[i+1]] = float(value)
                     except ValueError:
                         returns[columns[i+1]] = None
         else:
@@ -96,50 +100,62 @@ def get_stock_returns(driver, exchange, ticker, columns):
         print(f"Error processing {exchange}:{ticker}: {str(e)}")
         return None
 
-def main():
-    driver = setup_driver()
-    
-    try:
-        tickers = read_stock_tickers('priv/morningstar_ticker.txt')
-        columns = ['Exchange', 'Ticker', '1-Day', '1-Week', '1-Month', '3-Month', 'YTD', 
-                  '1-Year', '3-Year', '5-Year', '10-Year', '15-Year']
-        results = []
-        
-        for exchange, ticker in tqdm(tickers, desc="Processing stocks"):
-            returns = get_stock_returns(driver, exchange, ticker, columns)
-            if returns:
-                row = [exchange, ticker]
-                for period in columns[2:]:
-                    row.append(returns.get(period, None))
-                results.append(row)
-                print(f"Added data for {exchange}:{ticker}")
-            # time.sleep(random.uniform(3, 5))
-
-        if not results:
-            print("No data was collected!")
-            return
-            
-        print(f"Total records collected: {len(results)}")
-        df = pd.DataFrame(results, columns=columns)
-        print("DataFrame created successfully")
-        print(df.head())  # Print first few rows to verify data
-        
+def save_to_file(row_data, is_first=False):
+    """Save a single row of data to text file"""
+    with excel_lock:
         try:
-            df.to_excel('stock_return.xlsx', index=False)
-            print(f"Data successfully saved to stock_return.xlsx")
+            # Convert row data to string format
+            row_str = [str(val) if val is not None else '' for val in row_data]
+            
+            # Write to file
+            with open('stocks_return.txt', 'a') as f:
+                if is_first:
+                    # Write header for first row
+                    f.write(','.join(columns) + '\n')
+                f.write(','.join(row_str) + '\n')
+            
+            return True
         except Exception as e:
-            print(f"Error saving to Excel: {str(e)}")
-            # Try saving as CSV as backup
-            try:
-                df.to_csv('stock_return.csv', index=False)
-                print("Data saved to stock_return.csv as backup")
-            except Exception as e:
-                print(f"Error saving to CSV: {str(e)}")
-    
+            print(f"Error saving data: {str(e)}")
+            return False
+
+def process_ticker(ticker_data):
+    """Process a single ticker and return the results"""
+    exchange, ticker = ticker_data
+    driver = setup_driver()
+    try:
+        returns = get_stock_returns(driver, exchange, ticker)
+        if returns:
+            row = [exchange, ticker]
+            for period in columns[2:]:
+                row.append(returns.get(period, None))
+            # Save immediately after getting data
+            save_to_file(row, is_first=not os.path.exists('stocks_return.txt'))
+            return row
     except Exception as e:
-        print(f"Error in main process: {str(e)}")
+        print(f"Error processing {exchange}:{ticker}: {str(e)}")
     finally:
         driver.quit()
+    return None
+
+def main():
+    tickers = read_stock_tickers('priv/morningstar_ticker.txt')
+    total_tickers = len(tickers)
+    print(f"Total tickers to process: {total_tickers}")
+    
+    # Clear the output file if it exists
+    if os.path.exists('stocks_return.txt'):
+        os.remove('stocks_return.txt')
+    
+    max_workers = 10
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(process_ticker, ticker): ticker for ticker in tickers}
+        
+        for future in tqdm(as_completed(futures), total=len(futures), desc="Processing stocks"):
+            future.result()  # We don't need to store results anymore
+    
+    print("Processing completed!")
 
 if __name__ == "__main__":
     main() 
