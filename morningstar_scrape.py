@@ -22,8 +22,22 @@ batch_size = 100  # Number of records to save in each batch
 columns = ['Exchange', 'Ticker', '1-Day', '1-Week', '1-Month', '3-Month', 'YTD', 
            '1-Year', '3-Year', '5-Year', '10-Year', '15-Year']
 
-def read_stock_tickers(file_path):
-    tickers = []
+def read_existing_tickers(file_path):
+    """Read tickers that have already been fetched from stocks_return.csv"""
+    existing = set()
+    if not os.path.exists(file_path):
+        return existing
+    with open(file_path, 'r') as f:
+        next(f, None)  # skip header
+        for line in f:
+            parts = line.strip().split(',')
+            if len(parts) >= 2:
+                existing.add((parts[0], parts[1]))
+    return existing
+
+def read_stock_tickers(file_path, fetched_file='stocks_return.csv'):
+    """Read tickers from input file, skip those already fetched"""
+    all_tickers = []
     with open(file_path, 'r') as file:
         for line in file:
             line = line.strip()
@@ -31,8 +45,12 @@ def read_stock_tickers(file_path):
                 parts = line.split(',')
                 if len(parts) == 2:
                     exchange, ticker = parts
-                    tickers.append((exchange, ticker))
-    return tickers
+                    all_tickers.append((exchange, ticker))
+    already_fetched = read_existing_tickers(fetched_file)
+    # Filter out tickers that already exist in stocks_return.csv
+    to_fetch = [t for t in all_tickers if t not in already_fetched]
+    print(f"Total tickers: {len(all_tickers)}, Already fetched: {len(already_fetched)}, To fetch: {len(to_fetch)}")
+    return to_fetch
 
 def setup_driver():
     chrome_options = Options()
@@ -108,7 +126,7 @@ def save_to_file(row_data, is_first=False):
             row_str = [str(val) if val is not None else '' for val in row_data]
             
             # Write to file
-            with open('stocks_return.txt', 'a') as f:
+            with open('stocks_return.csv', 'a') as f:
                 if is_first:
                     # Write header for first row
                     f.write(','.join(columns) + '\n')
@@ -130,7 +148,7 @@ def process_ticker(ticker_data):
             for period in columns[2:]:
                 row.append(returns.get(period, None))
             # Save immediately after getting data
-            save_to_file(row, is_first=not os.path.exists('stocks_return.txt'))
+            save_to_file(row, is_first=not os.path.exists('stocks_return.csv'))
             return row
     except Exception as e:
         print(f"Error processing {exchange}:{ticker}: {str(e)}")
@@ -139,13 +157,9 @@ def process_ticker(ticker_data):
     return None
 
 def main():
-    tickers = read_stock_tickers('priv/morningstar_ticker.txt')
+    tickers = read_stock_tickers('priv/morningstar_ticker.txt', 'priv/stocks_return.csv')
     total_tickers = len(tickers)
     print(f"Total tickers to process: {total_tickers}")
-    
-    # Clear the output file if it exists
-    if os.path.exists('stocks_return.txt'):
-        os.remove('stocks_return.txt')
     
     max_workers = 10
     
