@@ -144,7 +144,7 @@ defmodule GuruFocusScrape do
       IO.inspect("parse_summary_data: #{ticker}")
       Task.async(fn -> parse_summary_data(ticker) end)
     end)
-    |> Task.await_many(60_000)
+    |> Task.await_many(300_000)
   end
 
   def parse_summary_data(ticker) do

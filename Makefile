@@ -12,3 +12,6 @@ parse-summary-data:
 
 screen-stock:
 	iex -S mix GuruFocusScrape.stock_screen()
+
+install-python:
+	pip install -r requirements.txt
